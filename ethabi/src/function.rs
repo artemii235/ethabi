@@ -49,6 +49,11 @@ impl Function {
 	pub fn decode_output(&self, data: &[u8]) -> Result<Vec<Token>> {
 		decode(&self.output_param_types(), &data)
 	}
+
+	/// Parses the ABI function call to list of tokens.
+	pub fn decode_input(&self, data: &[u8]) -> Result<Vec<Token>> {
+		decode(&self.input_param_types(), &data[4..])
+	}
 }
 
 #[cfg(test)]
@@ -77,5 +82,29 @@ mod tests {
 		let encoded = func.encode_input(&[Token::Uint(uint.into()), Token::Bool(true)]).unwrap();
 		let expected = "cdcd77c000000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001".from_hex().unwrap();
 		assert_eq!(encoded, expected);
+	}
+
+	#[test]
+	fn test_function_decode_call() {
+		let interface = Function {
+			name: "baz".to_owned(),
+			inputs: vec![Param {
+				name: "a".to_owned(),
+				kind: ParamType::Uint(32),
+			}, Param {
+				name: "b".to_owned(),
+				kind: ParamType::Bool,
+			}],
+			outputs: vec![],
+			constant: false,
+		};
+
+		let func = Function::from(interface);
+		let mut uint = [0u8; 32];
+		uint[31] = 69;
+		let input = "cdcd77c000000000000000000000000000000000000000000000000000000000000000450000000000000000000000000000000000000000000000000000000000000001".from_hex().unwrap();
+		let decoded = func.decode_input(&input).unwrap();
+		let expected = vec![Token::Uint(uint.into()), Token::Bool(true)];
+		assert_eq!(decoded, expected);
 	}
 }
