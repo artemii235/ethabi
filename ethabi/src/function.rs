@@ -54,6 +54,11 @@ impl Function {
 	pub fn decode_input(&self, data: &[u8]) -> Result<Vec<Token>> {
 		decode(&self.input_param_types(), &data[4..])
 	}
+
+	/// Returns short function signature
+	pub fn short_signature(&self) -> [u8; 4] {
+		short_signature(&self.name, &self.input_param_types())
+	}
 }
 
 #[cfg(test)]
